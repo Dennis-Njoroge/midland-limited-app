@@ -1,11 +1,14 @@
 package com.example.agro_irrigation.Activities;
 
+import android.app.Dialog;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.Html;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.TextView;
 
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
@@ -16,6 +19,8 @@ import com.example.agro_irrigation.R;
 
 public class HelpActivity extends AppCompatActivity implements View.OnClickListener {
     private CardView cvFeedback, cvContacts, cvAbout, cvFAQ;
+
+    private Dialog abtUsDialog;
     Toolbar toolbar;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,12 +44,29 @@ public class HelpActivity extends AppCompatActivity implements View.OnClickListe
         cvContacts = findViewById(R.id.contact_details);
         cvFAQ = findViewById(R.id.faq);
         cvAbout = findViewById(R.id.about);
+        abtUsDialog = new Dialog(this);
 
         //setting onClick Listener
         cvFeedback.setOnClickListener(this);
         cvFAQ.setOnClickListener(this);
         cvAbout.setOnClickListener(this);
         cvContacts.setOnClickListener(this);
+
+    }
+
+    public void onAboutUsClick(){
+        TextView txtClose, txtAboutUs;
+        abtUsDialog.setContentView(R.layout.about_us_dialog);
+
+        txtClose = (TextView) abtUsDialog.findViewById(R.id.close);
+        txtAboutUs = (TextView) abtUsDialog.findViewById(R.id.aboutUs);
+
+        txtAboutUs.setText(Html.fromHtml(this.getString(R.string.about_us_long)));
+
+        abtUsDialog.setCancelable(true);
+        txtClose.setOnClickListener(v -> abtUsDialog.dismiss());
+        abtUsDialog.show();
+
     }
 
     @Override
@@ -60,6 +82,9 @@ public class HelpActivity extends AppCompatActivity implements View.OnClickListe
                 i = new Intent(this, FaqActivity.class);
                 startActivity(i);
                 overridePendingTransition(R.anim.slide_in_right,R.anim.stay);
+                break;
+            case R.id.about:
+                onAboutUsClick();
                 break;
             default:
                 break;

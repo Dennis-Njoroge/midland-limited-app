@@ -77,13 +77,7 @@ public class OrdersActivity extends AppCompatActivity {
         if(userType.equals("customer")) {
             linearLayoutManager.setVisibility(View.GONE);
             linearLayoutCustomer.setVisibility(View.VISIBLE);
-            handler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    // Do something after 1.5s = 1500ms
-                    getOrders(userId);
-                }
-            }, 1500);
+            getOrders(userId);
             edSearch.addTextChangedListener(new TextWatcher() {
                 @Override
                 public void beforeTextChanged(CharSequence s, int start, int count, int after) {

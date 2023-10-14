@@ -103,15 +103,11 @@ public class ApprovedFragment extends Fragment {
         shimmerFrameLayoutOrder.stopShimmer();
     }
     public void getOrders() {
-        String driver = "";
         String URL_JSON=baseUrl+"salesmanager/";
 
-        if (userType.equals("driver")) {
-            driver = userId;
-        }
+
 
         txtNoItems.setVisibility(View.GONE);
-        String finalDriver = driver;
         StringRequest request = new StringRequest(Request.Method.POST,URL_JSON,
                 response -> {
                     // Log.i("Error", "onResponse: "+response);
@@ -173,9 +169,14 @@ public class ApprovedFragment extends Fragment {
             protected Map<String, String> getParams() throws AuthFailureError {
                 Map<String,String>params =new HashMap<>();
                 params.put("action","view_orders");
-//                params.put("status","Approved");
                 params.put("status",Status);
-                params.put("driver_id", finalDriver);
+                if (userType.equals("driver")) {
+                    params.put("driver_id", userId);
+                }
+                else{
+                    params.put("driver_id", "");
+                }
+
                 return params;
             }
         };

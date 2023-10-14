@@ -4,12 +4,14 @@ import android.app.Dialog;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.Html;
 import android.util.Log;
 import android.util.Patterns;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -40,10 +42,12 @@ import br.com.simplepass.loading_button_lib.customViews.CircularProgressButton;
 
 public class LoginActivity extends AppCompatActivity {
     private EditText txtEmail, txtPassword;
+
+    private LinearLayout aboutUsLayout;
     private CircularProgressButton btnLogin;
     AwesomeValidation awesomeValidation;
     SessionManager sessionManager;
-    Dialog myDialog;
+    Dialog myDialog, abtUsDialog;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -55,6 +59,8 @@ public class LoginActivity extends AppCompatActivity {
         txtPassword = (EditText) findViewById(R.id.password);
         btnLogin = (CircularProgressButton) findViewById(R.id.btnLogin);
         myDialog = new Dialog(this);
+        abtUsDialog = new Dialog(this);
+        aboutUsLayout = (LinearLayout) findViewById(R.id.learn_more);
 
         //initialize validation style
         awesomeValidation = new AwesomeValidation(ValidationStyle.BASIC);
@@ -68,19 +74,26 @@ public class LoginActivity extends AppCompatActivity {
         awesomeValidation.addValidation(LoginActivity.this,R.id.password,
                 RegexTemplate.NOT_EMPTY,R.string.invalid_password);
 
-        btnLogin.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                btnLogin.startAnimation();
-                if(awesomeValidation.validate()){
-                    String email    = txtEmail.getText().toString().trim();
-                    String password = txtPassword.getText().toString().trim();
-                    loginUser(email,password);
-                }else{
-                    btnLogin.revertAnimation();
-                }
+        btnLogin.setOnClickListener(v -> {
+            btnLogin.startAnimation();
+            if(awesomeValidation.validate()){
+                String email    = txtEmail.getText().toString().trim();
+                String password = txtPassword.getText().toString().trim();
+                loginUser(email,password);
+            }else{
+                btnLogin.revertAnimation();
             }
         });
+        aboutUsLayout.setOnClickListener(v -> onAboutUsClick());
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if (abtUsDialog != null) {
+            abtUsDialog.getWindow().setWindowAnimations(R.style.AppTheme_Slide);
+        }
+        // getAccessToken();
     }
 
     private void loginUser(String email, String password) {
@@ -257,6 +270,21 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
         myDialog.show();
+
+    }
+
+    public void onAboutUsClick(){
+        TextView txtClose, txtAboutUs;
+        abtUsDialog.setContentView(R.layout.about_us_dialog);
+
+        txtClose = (TextView) abtUsDialog.findViewById(R.id.close);
+        txtAboutUs = (TextView) abtUsDialog.findViewById(R.id.aboutUs);
+
+        txtAboutUs.setText(Html.fromHtml(this.getString(R.string.about_us_long)));
+
+//        abtUsDialog.setCancelable(false);
+        txtClose.setOnClickListener(v -> abtUsDialog.dismiss());
+        abtUsDialog.show();
 
     }
     @Override

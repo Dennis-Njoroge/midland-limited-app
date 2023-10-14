@@ -373,7 +373,7 @@ public class OrderRecyclerViewAdapter extends RecyclerView.Adapter<OrderRecycler
         DateFormat dateFormat;
         Bitmap bmp,scaleBmp;
         int pageWidth = 1200;
-        bmp = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.favicon);
+        bmp = BitmapFactory.decodeResource(mContext.getResources(), R.drawable.midland_logo);
         scaleBmp = Bitmap.createScaledBitmap(bmp,200,200,false);
         PdfDocument myPdfDocument = new PdfDocument();
         Paint myPaint = new Paint();
@@ -385,7 +385,7 @@ public class OrderRecyclerViewAdapter extends RecyclerView.Adapter<OrderRecycler
         PdfDocument.PageInfo myPageInfo1 = new PdfDocument.PageInfo.Builder(1200,2010,1).create();
         PdfDocument.Page myPage1 = myPdfDocument.startPage(myPageInfo1);
         Canvas canvas = myPage1.getCanvas();
-        //canvas.drawBitmap(scaleBmp,500,20,myPaint);
+        canvas.drawBitmap(scaleBmp,500,20,myPaint);
         titlePaint.setTextAlign(Paint.Align.CENTER);
         titlePaint.setTypeface(Typeface.create(Typeface.DEFAULT,Typeface.BOLD));
 
@@ -626,6 +626,7 @@ public class OrderRecyclerViewAdapter extends RecyclerView.Adapter<OrderRecycler
                         .setConfirmText("Yes, Dispatch order!")
                         .setConfirmClickListener(sDialog -> {
                             updateStatus(sDialog,id,"Dispatched",pos,driver);
+                            myDialog.dismiss();
                         })
                         .show();
 
@@ -812,6 +813,9 @@ public class OrderRecyclerViewAdapter extends RecyclerView.Adapter<OrderRecycler
                         String success = jsonObject.getString("success");
 
                         if(success.equals("1")){
+                            if (status.equals("Dispatched")){
+                                updateDeliveryInfo(id, pos, driverName);
+                            }
                             sDialog
                                     .setTitleText("Confirmed!")
                                     .setContentText("Order status updated successfully!")
@@ -822,9 +826,10 @@ public class OrderRecyclerViewAdapter extends RecyclerView.Adapter<OrderRecycler
                                 mData.remove(pos);
                                 notifyItemRemoved(pos);
                             }
-                            if (status.equals("Approved")){
-                                sendData(transferdata());
-                            }
+
+//                            if (status.equals("Approved")){
+//                                sendData(transferdata());
+//                            }
                         }
                         else if(success.equals("0"))
                         {
@@ -877,8 +882,6 @@ public class OrderRecyclerViewAdapter extends RecyclerView.Adapter<OrderRecycler
 
                         if(success.equals("1")){
                             myDialog.dismiss();
-                                mData.remove(pos);
-                                notifyItemRemoved(pos);
                         }
                         else if(success.equals("0"))
                         {
