@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.Html;
-import android.util.Log;
 import android.util.Patterns;
 import android.view.View;
 import android.view.Window;
@@ -37,11 +36,14 @@ import org.json.JSONObject;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 import br.com.simplepass.loading_button_lib.customViews.CircularProgressButton;
 
 public class LoginActivity extends AppCompatActivity {
     private EditText txtEmail, txtPassword;
+
+    public String userID = "";
 
     private LinearLayout aboutUsLayout;
     private CircularProgressButton btnLogin;
@@ -99,69 +101,66 @@ public class LoginActivity extends AppCompatActivity {
     private void loginUser(String email, String password) {
         String URL_LOGIN = Constants.BASE_URL +"login/";
         StringRequest stringRequest=new StringRequest(Request.Method.POST, URL_LOGIN,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        btnLogin.revertAnimation();
-                        try {
-                            JSONObject jsonObject= new JSONObject(response);
-                            String success=jsonObject.getString("success");
-                            JSONArray jsonArray= jsonObject.getJSONArray("login");
-                            switch (success) {
-                                case "1":
-                                    for (int i = 0; i < jsonArray.length(); i++) {
-                                        JSONObject object = jsonArray.getJSONObject(i);
-                                        String username = object.getString("username").trim();
-                                        String user_email = object.getString("email").trim();
-                                        String id = object.getString("id").trim();
-                                        String user_type = object.getString("user_type").trim();
-                                        String photo = object.getString("photo").trim();
+                response -> {
+                    btnLogin.revertAnimation();
+                    try {
+                        JSONObject jsonObject = new JSONObject(response);
+                        String success = jsonObject.getString("success");
+                        JSONArray jsonArray = jsonObject.getJSONArray("login");
+                        switch (success) {
+                            case "1":
+                                for (int i = 0; i < jsonArray.length(); i++) {
+                                    JSONObject object = jsonArray.getJSONObject(i);
+                                    String username = object.getString("username").trim();
+                                    String user_email = object.getString("email").trim();
+                                    String id = object.getString("id").trim();
+                                    String user_type = object.getString("user_type").trim();
+                                    String photo = object.getString("photo").trim();
 
-                                        sessionManager.createSession(username, user_email, id, user_type, photo);
-                                        getUserDetails(user_email,user_type);
-                                        if (user_type.equals("admin")) {
-                                            Toast.makeText(LoginActivity.this, "This is an admin account. Log in using web url",
-                                                    Toast.LENGTH_LONG).show();
+                                    sessionManager.createSession(username, user_email, id, user_type, photo);
+                                    getUserDetails(user_email, user_type);
+                                    if (user_type.equals("admin")) {
+                                        Toast.makeText(LoginActivity.this, "This is an admin account. Log in using web url",
+                                                Toast.LENGTH_LONG).show();
 
-                                        } else {
-                                            Intent intent = new Intent(LoginActivity.this, HomeActivity.class);
-                                            intent.putExtra("username", username);
-                                            intent.putExtra("email", user_email);
-                                            startActivity(intent);
+                                    } else {
+                                        Intent intent = new Intent(LoginActivity.this, HomeActivity.class);
+                                        intent.putExtra("username", username);
+                                        intent.putExtra("email", user_email);
+                                        startActivity(intent);
 
-                                        }
                                     }
+                                }
 
-                                    break;
-                                case "0":
+                                break;
+                            case "0":
 
-                                    //Toast.makeText(LoginActivity.this, "Wrong Email/password combination ",Toast.LENGTH_SHORT).show();
-                                    txtPassword.setError("Enter correct password");
-                                    break;
-                                case "2":
-                                    Toast.makeText(LoginActivity.this,
-                                            "User does not exist! Please sign up ", Toast.LENGTH_SHORT).show();
-                                    break;
-                                case "3":
+                                //Toast.makeText(LoginActivity.this, "Wrong Email/password combination ",Toast.LENGTH_SHORT).show();
+                                txtPassword.setError("Enter correct password");
+                                break;
+                            case "2":
+                                Toast.makeText(LoginActivity.this,
+                                        "User does not exist! Please sign up ", Toast.LENGTH_SHORT).show();
+                                break;
+                            case "3":
 
-                                    Toast.makeText(LoginActivity.this,
-                                            "Account is inactive! Please contact the Admin", Toast.LENGTH_LONG).show();
-                                    break;
-                                case "4":
+                                Toast.makeText(LoginActivity.this,
+                                        "Account is inactive! Please contact the Admin", Toast.LENGTH_LONG).show();
+                                break;
+                            case "4":
 
-                                    Toast.makeText(LoginActivity.this,
-                                            "Account not yet approved! Contact the admin", Toast.LENGTH_LONG).show();
-                                    break;
-                            }
-
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-
-                            Toast.makeText(LoginActivity.this,
-                                    "Error plus: "+e.toString(),Toast.LENGTH_LONG).show();
+                                Toast.makeText(LoginActivity.this,
+                                        "Account not yet approved! Contact the admin", Toast.LENGTH_LONG).show();
+                                break;
                         }
 
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+
+                        Toast.makeText(LoginActivity.this,
+                                "Error plus: " + e.toString(), Toast.LENGTH_LONG).show();
                     }
+
                 },
                 new Response.ErrorListener() {
                     @Override
@@ -255,23 +254,196 @@ public class LoginActivity extends AppCompatActivity {
         overridePendingTransition(R.anim.slide_in_right,R.anim.stay);
     }
     public void onForgotPasswordClick(View View){
-        CircularProgressButton btnRecoverPswd;
-        EditText edEmail;
-        TextView txtClose;
+        CircularProgressButton btnRequestPass, btnValidateOTP, btnChangePass;
+        LinearLayout stepOne, stepTwo, stepThree;
+        EditText edEmail, edPassword, edConfirmPass, edOTPCode;
+
+        TextView txtClose, txtHelper;
         myDialog.setContentView(R.layout.forgot_password_dialog);
 
+        AtomicReference<String> userId = new AtomicReference<>("");
+
+        //initialize variables
         txtClose = (TextView) myDialog.findViewById(R.id.close);
+        txtHelper = (TextView) myDialog.findViewById(R.id.helperTxt);
+
+        stepOne = (LinearLayout) myDialog.findViewById(R.id.stepOne);
+        stepTwo = (LinearLayout) myDialog.findViewById(R.id.stepTwo);
+        stepThree = (LinearLayout) myDialog.findViewById(R.id.stepThree);
+
+        btnRequestPass = (CircularProgressButton) myDialog.findViewById(R.id.btnResetPassword);
+        btnValidateOTP = (CircularProgressButton) myDialog.findViewById(R.id.btnValidateOTP);
+        btnChangePass = (CircularProgressButton) myDialog.findViewById(R.id.btnChangePass);
+
+        edEmail = (EditText) myDialog.findViewById(R.id.emailAddress);
+        edOTPCode = (EditText) myDialog.findViewById(R.id.otp);
+        edPassword = (EditText) myDialog.findViewById(R.id.new_password);
+        edConfirmPass = (EditText) myDialog.findViewById(R.id.confirm_password);
+
+        //initializeItems
+        stepOne.setVisibility(android.view.View.VISIBLE);
+        stepTwo.setVisibility(android.view.View.GONE);
+        stepThree.setVisibility(android.view.View.GONE);
 
         myDialog.setCancelable(false);
-        txtClose.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                myDialog.dismiss();
-            }
+
+        txtClose.setOnClickListener(v -> myDialog.dismiss());
+
+        btnRequestPass.setOnClickListener(v ->{
+            String email = edEmail.getText().toString().trim();
+            validateEmail(email, txtHelper, stepOne, stepTwo, btnRequestPass);
         });
+        btnValidateOTP.setOnClickListener(v ->{
+            String otp = edOTPCode.getText().toString().trim();
+            if (otp.length() != 5){
+                edOTPCode.setError("Invalid OTP, should be 5 characters long!");
+                return;
+            }
+            validateOTP(otp, txtHelper, stepTwo, stepThree, btnValidateOTP);
+        });
+
+        btnChangePass.setOnClickListener(v -> {
+            String password = edPassword.getText().toString().trim();
+            String confirmPassword = edConfirmPass.getText().toString().trim();
+
+            if (password.length() < 8){
+                edPassword.setError("Password should be at least 8 characters long!");
+                return;
+            }
+
+            if (!password.equals(confirmPassword)){
+                edConfirmPass.setError("Password does not match");
+                return;
+            }
+            changePassword(password, myDialog, btnChangePass);
+
+        });
+
+
         myDialog.show();
 
     }
+    
+    
+    
+    public void validateEmail (String email, TextView txtHeader, LinearLayout stepOne, LinearLayout stepTwo, CircularProgressButton  btnRequestPass ){
+        String URL_VALIDATE_EMAIL = Constants.URL +"index.php?r=site/forgot-password&email="+email;
+        btnRequestPass.startAnimation();
+        StringRequest stringRequest=new StringRequest(Request.Method.GET, URL_VALIDATE_EMAIL,
+                response -> {
+                    btnRequestPass.revertAnimation();
+                    try {
+                        JSONObject jsonObject= new JSONObject(response);
+                        String success=jsonObject.getString("success");
+                        String message = jsonObject.getString("message");
+
+                        if (success.equals("1")){
+                            userID = jsonObject.getString("user_id");
+                            //Toast.makeText(LoginActivity.this, userID,Toast.LENGTH_LONG).show();
+                            txtHeader.setText(message);
+                            stepOne.setVisibility(android.view.View.GONE);
+                            stepTwo.setVisibility(android.view.View.VISIBLE);
+                            Toast.makeText(LoginActivity.this, message,Toast.LENGTH_LONG).show();
+                        }
+                        else{
+                            Toast.makeText(LoginActivity.this, message,Toast.LENGTH_LONG).show();
+                        }
+
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+
+                        Toast.makeText(LoginActivity.this,
+                                "Error plus: "+ e,Toast.LENGTH_LONG).show();
+                    }
+
+                },
+                error -> {
+                    btnRequestPass.revertAnimation();
+                    Toast.makeText(LoginActivity.this,
+                            "Error: "+error.toString(),Toast.LENGTH_SHORT).show();
+
+                });
+        RequestQueue requestQueue= Volley.newRequestQueue(this);
+        requestQueue.add(stringRequest);
+    }
+    public void validateOTP (String otp, TextView txtHeader, LinearLayout stepTwo, LinearLayout stepThree, CircularProgressButton  btnValidateOTP ){
+        String URL_VALIDATE_OTP = Constants.URL +"index.php?r=site/verify-otp&userId="+userID+"&otp="+otp;
+        //Toast.makeText(LoginActivity.this, URL_VALIDATE_OTP,Toast.LENGTH_LONG).show();
+        btnValidateOTP.startAnimation();
+        StringRequest stringRequest=new StringRequest(Request.Method.GET, URL_VALIDATE_OTP,
+                response -> {
+                    btnValidateOTP.revertAnimation();
+                    try {
+                        JSONObject jsonObject= new JSONObject(response);
+                        String success=jsonObject.getString("success");
+                        String message = jsonObject.getString("message");
+
+                        if (success.equals("1")){
+                            txtHeader.setText(message);
+                            stepTwo.setVisibility(android.view.View.GONE);
+                            stepThree.setVisibility(android.view.View.VISIBLE);
+                            Toast.makeText(LoginActivity.this, message,Toast.LENGTH_LONG).show();
+                        }
+                        else{
+                            Toast.makeText(LoginActivity.this, message,Toast.LENGTH_LONG).show();
+                        }
+
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+
+                        Toast.makeText(LoginActivity.this,
+                                "Error plus: "+ e,Toast.LENGTH_LONG).show();
+                    }
+
+                },
+                error -> {
+                    btnValidateOTP.revertAnimation();
+                    Toast.makeText(LoginActivity.this,
+                            "Error: "+error.toString(),Toast.LENGTH_SHORT).show();
+
+                });
+        RequestQueue requestQueue= Volley.newRequestQueue(this);
+        requestQueue.add(stringRequest);
+    }
+    public void changePassword (String password, Dialog myDialog, CircularProgressButton  btnChangePass ){
+        String URL_VALIDATE_EMAIL = Constants.URL +"index.php?r=site/reset-password&userId="+userID+"&password="+password;
+        btnChangePass.startAnimation();
+        StringRequest stringRequest=new StringRequest(Request.Method.GET, URL_VALIDATE_EMAIL,
+                response -> {
+                    btnChangePass.revertAnimation();
+                    try {
+                        JSONObject jsonObject= new JSONObject(response);
+                        String success=jsonObject.getString("success");
+                        String message = jsonObject.getString("message");
+
+                        if (success.equals("1")){
+                            Toast.makeText(LoginActivity.this, message,Toast.LENGTH_LONG).show();
+                            myDialog.dismiss();
+                        }
+                        else{
+                            Toast.makeText(LoginActivity.this, message,Toast.LENGTH_LONG).show();
+                        }
+
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+
+                        Toast.makeText(LoginActivity.this,
+                                "Error plus: "+ e,Toast.LENGTH_LONG).show();
+                    }
+
+                },
+                error -> {
+                    btnChangePass.revertAnimation();
+                    Toast.makeText(LoginActivity.this,
+                            "Error: "+error.toString(),Toast.LENGTH_SHORT).show();
+
+                });
+        RequestQueue requestQueue= Volley.newRequestQueue(this);
+        requestQueue.add(stringRequest);
+    }
+
+
+
 
     public void onAboutUsClick(){
         TextView txtClose, txtAboutUs;

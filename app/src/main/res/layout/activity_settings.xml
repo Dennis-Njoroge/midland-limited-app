@@ -78,7 +78,6 @@
             <androidx.cardview.widget.CardView
                 android:id="@+id/authentication"
                 app:cardUseCompatPadding="true"
-                android:visibility="gone"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 app:cardElevation="5dp"
@@ -255,6 +254,7 @@
             </androidx.cardview.widget.CardView>
             <androidx.cardview.widget.CardView
                 android:id="@+id/logout"
+                android:visibility="gone"
                 android:layout_width="match_parent"
                 app:cardUseCompatPadding="true"
                 android:layout_height="wrap_content"
@@ -269,27 +269,27 @@
                     android:layout_height="wrap_content"
                     android:gravity="center_vertical"
                     android:orientation="horizontal"
-                    android:padding="5dp"
-                    >
+                    android:padding="5dp">
+
                     <ImageView
                         android:layout_width="50dp"
                         android:layout_height="50dp"
-                        android:src="@drawable/ic_power_settings_new_black_24dp"
                         android:padding="5dp"
-                        />
+                        android:src="@drawable/ic_power_settings_new_black_24dp" />
+
                     <LinearLayout
-                        android:layout_marginStart="10dp"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
                         android:orientation="vertical">
+
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:textSize="18sp"
                             android:fontFamily="@font/open_sans_bold"
                             android:text="Logout"
                             android:textColor="@android:color/black"
-                            />
+                            android:textSize="18sp" />
 
                     </LinearLayout>
                 </LinearLayout>

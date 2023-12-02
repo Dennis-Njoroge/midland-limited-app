@@ -73,8 +73,14 @@ public class HelpActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View v) {
         Intent i;
         switch (v.getId()){
-            case R.id.contact_us:
+            case R.id.contact_details:
                 i = new Intent(this, ContactUsActivity.class);
+                startActivity(i);
+                overridePendingTransition(R.anim.slide_in_right,R.anim.stay);
+                break;
+            case R.id.contact_us:
+                //i = new Intent(this, ContactUsActivity.class);
+                i = new Intent(this, ChatUsersActivity.class);
                 startActivity(i);
                 overridePendingTransition(R.anim.slide_in_right,R.anim.stay);
                 break;

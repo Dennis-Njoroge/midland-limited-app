@@ -9,6 +9,7 @@
     <string name="confirm_password">Please confirm password</string>
     <string name="empty_email">Enter Email Address</string>
     <string name="empty_message">Please type message.</string>
+    <string name="empty_recipient">Select Recipient.</string>
     <string name="forgot_password">Do not worry! Please provide your email to recover password.</string>
     <string name="steps">
         <![CDATA[

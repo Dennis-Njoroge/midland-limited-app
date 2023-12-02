@@ -47,11 +47,12 @@ public class ContactUsActivity extends AppCompatActivity {
     Toolbar toolbar;
     private static final String TAG = HomeActivity.class.getSimpleName() ;
     private ArrayList<String> subjectList= new ArrayList<>();
-    AutoCompleteTextView drpSubject;
+    private ArrayList<String> toList= new ArrayList<>();
+    AutoCompleteTextView drpSubject, drpTo;
     String userId,userEmail;
     SessionManager sessionManager;
     TextInputEditText edEmail,edMessage;
-    TextInputLayout txtSubject;
+    TextInputLayout txtSubject, txtTo;
     AwesomeValidation awesomeValidation;
     Button btnSubmit;
     @Override
@@ -69,10 +70,12 @@ public class ContactUsActivity extends AppCompatActivity {
         }
 
         drpSubject = findViewById(R.id.subject);
+        drpTo = (AutoCompleteTextView) findViewById(R.id.toAut);
         edEmail = findViewById(R.id.email);
         edMessage  = findViewById(R.id.message);
         btnSubmit = (Button) findViewById(R.id.submit);
         txtSubject = (TextInputLayout) findViewById(R.id.textSubject);
+        txtTo = (TextInputLayout) findViewById(R.id.textTo);
 
         sessionManager = new SessionManager(this);
         HashMap<String, String> user = sessionManager.getUserDetail();
@@ -86,17 +89,18 @@ public class ContactUsActivity extends AppCompatActivity {
                 Patterns.EMAIL_ADDRESS,R.string.invalid_email);
         awesomeValidation.addValidation(ContactUsActivity.this,R.id.message,
                 RegexTemplate.NOT_EMPTY,R.string.empty_message);
+        awesomeValidation.addValidation(ContactUsActivity.this,R.id.toAut,
+                RegexTemplate.NOT_EMPTY, R.string.empty_message);
 
         //populate the spinner with drivers
-        subjectList.add("App Crashes");
-        subjectList.add("Service Issues");
-        subjectList.add("Complaints");
-        subjectList.add("Unavailable Service");
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
-                android.R.layout.simple_spinner_dropdown_item,subjectList);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        drpSubject.setAdapter(adapter);
+
         edEmail.setText(userEmail);
+
+        //populate subject list
+        setSubjectList();
+
+        //populate toList
+        setToList();
 
         btnSubmit.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -109,6 +113,29 @@ public class ContactUsActivity extends AppCompatActivity {
         });
     }
 
+    private void setSubjectList () {
+        subjectList.add("App Crashes");
+        subjectList.add("Service Issues");
+        subjectList.add("Complaints");
+        subjectList.add("Unavailable Service");
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_dropdown_item,subjectList);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        drpSubject.setAdapter(adapter);
+    }
+
+    private void setToList () {
+        toList.add("Admin");
+        toList.add("Sales Manager");
+        toList.add("Store Manager");
+        toList.add("Shipment Manager");
+        toList.add("Driver");
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_dropdown_item,toList);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        drpTo.setAdapter(adapter);
+    }
+
 
     private void sendMessage() {
         final ProgressDialog progressDialog = new ProgressDialog(this);
@@ -118,13 +145,13 @@ public class ContactUsActivity extends AppCompatActivity {
         final String email= Objects.requireNonNull(edEmail.getText()).toString().trim();
         final String message= Objects.requireNonNull(edMessage.getText()).toString().trim();
         final String subject =((AutoCompleteTextView)txtSubject.getEditText()).getText().toString().trim();
+        final String to =((AutoCompleteTextView)txtTo.getEditText()).getText().toString().trim();
 
         //Log.i(TAG,prod_category);
         StringRequest stringRequest=new StringRequest(Request.Method.POST, URL_ADD_PROD,
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
-                        Log.i(TAG,response);
                         try{
                             JSONObject jsonObject= new JSONObject(response);
                             String success=jsonObject.getString("success");
@@ -163,6 +190,7 @@ public class ContactUsActivity extends AppCompatActivity {
                 params.put("id",userId);
                 params.put("email",email);
                 params.put("subject",subject);
+                params.put("to",to);
                 params.put("message",message);
                 return params;
             }

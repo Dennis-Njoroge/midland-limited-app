@@ -241,7 +241,8 @@ public class CartActivity extends AppCompatActivity  {
             @Override
             public void onClick(View v) {
                 String transaction= edTransactionCode.getText().toString().trim();
-                String regexPattern = "^[A-Z][A-Z0-9]{8}[A-Z]$";
+//                String regexPattern = "^[A-Z][A-Z0-9]{8}[A-Z]$";
+                String regexPattern = "^[A-Z][A-Z0-9]{9}";
                 Pattern pattern = Pattern.compile(regexPattern);
                 Matcher matcher = pattern.matcher(transaction);
                 if(transaction.isEmpty())
@@ -250,7 +251,7 @@ public class CartActivity extends AppCompatActivity  {
                     return;
                 }
                 if (!matcher.matches()) {
-                    edTransactionCode.setError("Invalid MPESA Code, should be 10 characters long and start and end with a letter");
+                    edTransactionCode.setError("Invalid MPESA Code, should be 10 characters long and start with a letter");
                     return;
                 }
 

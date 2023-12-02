@@ -181,16 +181,16 @@ public class PurchasesRecyclerViewAdapter extends RecyclerView.Adapter<Purchases
             holder.btnConfirmPurchase.setText("Confirm");
             holder.layoutAddress.setVisibility(View.GONE);
         }
-        if (userType.equals("sales manager") && status.equals("APPROVED") && Objects.equals(purchase.getPayment_code(), "null") ){
+        if (userType.equals("sales manager") && status.equals("COMPLETED") && Objects.equals(purchase.getPayment_code(), "null") ){
             holder.layoutAction.setVisibility(View.VISIBLE);
             holder.btnApprove.setVisibility(View.GONE);
             holder.btnConfirmPurchase.setVisibility(View.VISIBLE);
             holder.btnCancel.setVisibility(View.GONE);
             holder.btnConfirmPurchase.setText("Make Payment");
-            PURCHASE_STATUS = "APPROVED";
+            PURCHASE_STATUS = "COMPLETED";
 
         }
-        if (userType.equals("store manager") && status.equals("APPROVED") && !Objects.equals(purchase.getPayment_code(), "null")){
+        if (userType.equals("store manager") && status.equals("APPROVED")){
             holder.layoutAction.setVisibility(View.VISIBLE);
             holder.btnApprove.setVisibility(View.VISIBLE);
             holder.btnCancel.setVisibility(View.GONE);
@@ -198,7 +198,7 @@ public class PurchasesRecyclerViewAdapter extends RecyclerView.Adapter<Purchases
             PURCHASE_STATUS = "COMPLETED";
         }
 
-        if(status.equals("CANCELED") || status.equals("COMPLETED")){
+        if(status.equals("CANCELED") || (status.equals("COMPLETED") && !Objects.equals(purchase.getPayment_code(), "null"))){
             holder.layoutAction.setVisibility(View.GONE);
         }
         final Double TOTAL_AMOUNT = Double.parseDouble(String.valueOf(totalAmount));
@@ -231,7 +231,7 @@ public class PurchasesRecyclerViewAdapter extends RecyclerView.Adapter<Purchases
         });
         holder.btnConfirmPurchase.setOnClickListener(v -> {
             if (userType.equals("sales manager")){
-                makePaymentPopup(id, purchaseNo, price, availableQty,  pos);
+                makePaymentPopup(id, purchaseNo, price, availableQty,  pos,  finalPURCHASE_STATUS );
                 return;
             }
             confirmPurchasePopup(id,purchaseNo,String.valueOf(price),  String.valueOf(originalQty),pos);
@@ -599,7 +599,7 @@ public class PurchasesRecyclerViewAdapter extends RecyclerView.Adapter<Purchases
         myDialog.show();
     }
 
-    public void makePaymentPopup(String id, String purchaseNo, int price, int availableQty, int pos){
+    public void makePaymentPopup(String id, String purchaseNo, int price, int availableQty, int pos, String status){
         Button btnSubmit;
         TextView txtClose,txtAmount, txtTitle;
         LinearLayout makePaymentLayout, confirmPurchaseLayout;
@@ -628,7 +628,8 @@ public class PurchasesRecyclerViewAdapter extends RecyclerView.Adapter<Purchases
         txtClose.setOnClickListener(v -> myDialog.dismiss());
         btnSubmit.setOnClickListener(v -> {
             String transactionCode = edPaymentCode.getText().toString().trim();
-            String regexPattern = "^[A-Z][A-Z0-9]{8}[A-Z]$";
+           // String regexPattern = "^[A-Z][A-Z0-9]{8}[A-Z]$";
+            String regexPattern = "^[A-Z][A-Z0-9]{9}";
             Pattern pattern = Pattern.compile(regexPattern);
             Matcher matcher = pattern.matcher(transactionCode);
             if(transactionCode.equals(""))
@@ -637,7 +638,7 @@ public class PurchasesRecyclerViewAdapter extends RecyclerView.Adapter<Purchases
                 return;
             }
             if (!matcher.matches()) {
-                edPaymentCode.setError("Invalid MPESA Code, should be 10 characters long and start and end with a letter");
+                edPaymentCode.setError("Invalid MPESA Code, should be 10 characters long and start with a letter");
                 return;
             }
 
@@ -647,7 +648,7 @@ public class PurchasesRecyclerViewAdapter extends RecyclerView.Adapter<Purchases
                     .setConfirmText("Yes, Proceed!")
                     .setConfirmClickListener(sDialog -> {
                         myDialog.dismiss();
-                        updateStatus(sDialog,id,"APPROVED",pos, String.valueOf(availableQty), String.valueOf(price), transactionCode);
+                        updateStatus(sDialog,id,status ,pos, String.valueOf(availableQty), String.valueOf(price), transactionCode);
                     })
                     .show();
         });
@@ -664,7 +665,7 @@ public class PurchasesRecyclerViewAdapter extends RecyclerView.Adapter<Purchases
             String paymentCode
     ){
         String URL_APPROVE = baseUrl+"farmer/?action=update_purchase_status";
-        if(status.equals("APPROVED")){
+        if(status.equals("APPROVED") || !paymentCode.isEmpty()){
             URL_APPROVE = baseUrl+"farmer/?action=approve_purchase";
         }
         StringRequest stringRequest = new StringRequest(Request.Method.POST, URL_APPROVE,
